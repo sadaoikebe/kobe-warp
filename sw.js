@@ -1,5 +1,5 @@
 // オフラインでも開けるようにシェルと暗号化済み本体をキャッシュする（ネット優先・3秒で諦めてキャッシュ）
-const C = 'warp-e4e30d5554';
+const C = 'warp-6feef84a24';
 const CORE = ['./', 'app.bin', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(CORE)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });

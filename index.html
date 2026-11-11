@@ -91,10 +91,62 @@ body{overflow-x:hidden;overscroll-behavior-y:contain}
     for (var j = parts.length - 1; j >= 0; j--) {
       var p = parts[j]; p.l -= dt; if (p.l <= 0) { parts.splice(j, 1); continue; }
       p.vy += 900 * DPR * dt * p.g; p.x += p.vx * dt; p.y += p.vy * dt;
-      cx.fillStyle = 'hsla(' + p.h + ',100%,65%,' + Math.min(1, p.l * 1.6) + ')';
-      cx.beginPath(); cx.arc(p.x, p.y, p.r * DPR, 0, 6.283); cx.fill();
+      var pa = Math.min(1, p.l * 1.6);
+      if (p.tail) {
+        cx.strokeStyle = 'hsla(' + p.h + ',100%,78%,' + pa + ')'; cx.lineWidth = p.r * DPR;
+        cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(p.x - p.vx * 0.09, p.y - p.vy * 0.09); cx.stroke();
+      } else if (p.sq) {
+        p.rot += p.vr * dt; var w = p.r * DPR * 2.2, hh = w * (0.35 + 0.65 * Math.abs(Math.cos(p.rot * 1.7)));
+        cx.save(); cx.translate(p.x, p.y); cx.rotate(p.rot); cx.fillStyle = 'hsla(' + p.h + ',95%,62%,' + pa + ')'; cx.fillRect(-w / 2, -hh / 2, w, hh); cx.restore();
+      } else {
+        cx.fillStyle = 'hsla(' + p.h + ',100%,65%,' + pa + ')';
+        cx.beginPath(); cx.arc(p.x, p.y, p.r * DPR, 0, 6.283); cx.fill();
+      }
     }
+    ambientFrame(dt, t);
     requestAnimationFrame(frame);
+  }
+  // ---- 常時エフェクト（運行状態・時間帯・気分で切り替える） ----
+  var A = { name: '', k: 1, t: 0, rot: 0 };
+  function ambient(name, k) { if (A.name !== name) { A.t = 9; } A.name = name || ''; A.k = k == null ? 1 : k; }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function ambientFrame(dt, now) {
+    if (reduce || !A.name) return;
+    A.t += dt; A.rot += dt;
+    var i, n;
+    if (A.name === 'fireworks') {
+      if (A.t > 0.95 / A.k) { A.t = 0; burst(rnd(0.12, 0.88) * innerWidth, rnd(0.08, 0.5) * innerHeight, 44, [S.hueA, S.hueB, 50, rnd(0, 360)]); }
+    } else if (A.name === 'confetti') {
+      n = 46 * A.k * dt; n = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+      for (i = 0; i < n; i++) parts.push({ x: Math.random() * W, y: -12, vx: rnd(-40, 40) * DPR, vy: rnd(110, 260) * DPR, l: 4.5, r: rnd(2.4, 4.6), h: rnd(0, 360), g: 0.02, sq: 1, rot: rnd(0, 6), vr: rnd(-7, 7) });
+    } else if (A.name === 'meteor') {
+      if (A.t > 0.42 / A.k) { A.t = 0; parts.push({ x: rnd(0.25, 1.25) * W, y: -20, vx: -rnd(520, 900) * DPR, vy: rnd(420, 700) * DPR, l: 1.3, r: rnd(1.4, 2.8), h: Math.random() < 0.6 ? S.hueA : S.hueB, g: 0, tail: 1 }); }
+    } else if (A.name === 'embers') {
+      n = 30 * A.k * dt; n = Math.floor(n) + (Math.random() < n % 1 ? 1 : 0);
+      for (i = 0; i < n; i++) parts.push({ x: Math.random() * W, y: H + 6, vx: rnd(-26, 26) * DPR, vy: -rnd(40, 130) * DPR, l: rnd(2.5, 5), r: rnd(1, 2.6), h: rnd(14, 46), g: 0 });
+    } else if (A.name === 'alarm') {
+      // 回転灯: 画面上端から回る赤いビーム2本 + ふちの赤い脈動
+      var ox = W / 2, oy = -H * 0.04, R = Math.max(W, H) * 1.5, a0 = A.rot * 2.6;
+      for (i = 0; i < 2; i++) {
+        var ang = a0 + i * Math.PI, g = cx.createRadialGradient(ox, oy, 0, ox, oy, R);
+        g.addColorStop(0, 'rgba(255,40,60,' + 0.34 * A.k + ')'); g.addColorStop(1, 'rgba(255,40,60,0)');
+        cx.fillStyle = g; cx.beginPath(); cx.moveTo(ox, oy); cx.arc(ox, oy, R, ang - 0.2, ang + 0.2); cx.closePath(); cx.fill();
+      }
+      var pulse = 0.5 + 0.5 * Math.sin(now / 260), eg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.45, W / 2, H / 2, Math.max(W, H) * 0.8);
+      eg.addColorStop(0, 'rgba(255,0,40,0)'); eg.addColorStop(1, 'rgba(255,0,40,' + (0.1 + 0.22 * pulse) * A.k + ')');
+      cx.fillStyle = eg; cx.fillRect(0, 0, W, H);
+    } else if (A.name === 'static') {
+      for (i = 0; i < 7; i++) { cx.fillStyle = 'rgba(170,190,255,' + rnd(0.02, 0.09) + ')'; cx.fillRect(0, Math.random() * H, W, rnd(1, 5) * DPR); }
+    } else if (A.name === 'aurora') {
+      for (i = 0; i < 3; i++) {
+        var base = H * (0.16 + i * 0.13), hue = i % 2 ? S.hueB : S.hueA;
+        cx.strokeStyle = 'hsla(' + hue + ',100%,62%,' + 0.05 * A.k + ')'; cx.lineWidth = H * 0.11;
+        cx.beginPath();
+        for (var x = -20; x <= W + 20; x += 24 * DPR) { var y = base + Math.sin(x / (150 * DPR) + now / (1900 + i * 500) + i * 2) * H * 0.045; if (x === -20) cx.moveTo(x, y); else cx.lineTo(x, y); }
+        cx.stroke();
+      }
+    }
+    if (parts.length > 900) parts.splice(0, parts.length - 900);
   }
   function burst(x, y, n, hues) {
     if (reduce) return;
@@ -120,12 +172,12 @@ body{overflow-x:hidden;overscroll-behavior-y:contain}
     running = !document.hidden; if (running) { last = performance.now(); requestAnimationFrame(frame); }
   });
   resize(); requestAnimationFrame(frame);
-  window.Warp = { burst: burst, jump: jump, theme: theme };
+  window.Warp = { burst: burst, jump: jump, theme: theme, ambient: ambient };
 })();
 
 /* ---------- 合言葉ゲート: app.bin (AES-GCM) を復号して起動 ---------- */
 (function () {
-  var SALT = 'c3HG7DMJopalXN3pjB1f+g==', ITER = 250000, BUILD = 'e4e30d5554';
+  var SALT = 'c3HG7DMJopalXN3pjB1f+g==', ITER = 250000, BUILD = '6feef84a24';
   var gate = document.getElementById('gate'), form = document.getElementById('gform'), inp = document.getElementById('gpass'), err = document.getElementById('gerr');
   var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del: function (k) { try { localStorage.removeItem(k); } catch (e) {} } };
   function b64d(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
