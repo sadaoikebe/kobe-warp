@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+<radialGradient id="bg" cx="50%" cy="46%" r="70%"><stop offset="0" stop-color="#2a0f6b"/><stop offset=".55" stop-color="#0b0326"/><stop offset="1" stop-color="#05010f"/></radialGradient>
+<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00f0ff"/><stop offset=".55" stop-color="#b96bff"/><stop offset="1" stop-color="#ff3df2"/></linearGradient>
+</defs>
+<rect width="512" height="512" fill="url(#bg)"/>
+<g stroke-linecap="round" fill="none">
+<g stroke="#00f0ff" stroke-width="7" opacity=".9"><path d="M256 236 L60 40"/><path d="M256 236 L470 70"/><path d="M256 236 L30 300"/><path d="M256 236 L490 330"/><path d="M256 236 L150 490"/><path d="M256 236 L380 495"/></g>
+<g stroke="#ff3df2" stroke-width="5" opacity=".8"><path d="M256 236 L200 20"/><path d="M256 236 L340 16"/><path d="M256 236 L20 170"/><path d="M256 236 L496 200"/><path d="M256 236 L40 440"/><path d="M256 236 L470 450"/><path d="M256 236 L262 500"/></g>
+</g>
+<circle cx="256" cy="236" r="150" fill="#05010f" opacity=".82"/>
+<text x="256" y="312" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-style="italic" font-size="230" fill="url(#g)">W</text>
+</svg>
