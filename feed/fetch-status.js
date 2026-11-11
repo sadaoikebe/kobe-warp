@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// 運行情報フィード生成: JR西日本公式 JSON を第一ソースに status.json を作る。
-// 公式が取得・解析できないときだけ Yahoo!路線情報にフォールバックする。
+// 運行情報フィード生成: JR西日本公式 JSON から status.json を作る（情報源は公式だけ）。
+// 取得・解析できなければ何も書かずに失敗で終わる。status.json は古いまま残り、アプリ側で「未確認」になる。
 // 使い方: node feed/fetch-status.js <出力先 status.json>
 const fs = require('fs');
 const path = require('path');
@@ -24,15 +24,11 @@ async function official() {
   }
   return null;
 }
-async function yahoo() {
-  try { return ST.parseYahoo(await (await get(ST.YAHOO_URL, 15000)).text()); }
-  catch (e) { console.error('yahoo:', e.message); return null; }
-}
 (async () => {
   const out = process.argv[2] || 'status.json';
-  const st = (await official()) || (await yahoo());
-  if (!st) { console.error('both sources failed; leaving previous status.json untouched'); process.exit(1); }
+  const st = await official();
+  if (!st) { console.error('official source failed; leaving previous status.json untouched'); process.exit(1); }
   st.fetchedAt = new Date().toISOString();
   fs.writeFileSync(out, JSON.stringify(st, null, 1) + '\n');
-  console.log(`${st.source} ${st.state} createdAt=${st.createdAt} details=${st.details.length}`);
+  console.log(`official ${st.state} createdAt=${st.createdAt} details=${st.details.length}`);
 })();

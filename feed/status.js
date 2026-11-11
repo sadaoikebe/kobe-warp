@@ -1,16 +1,16 @@
 // JR神戸線 運行情報パーサ（純粋関数。ブラウザ・Node 共用）
-// 正: ~/workspace/commute/commute.py の _fetch_official_status / _yahoo_status
+// 正: ~/workspace/commute/commute.py の _fetch_official_status
+// 情報源は公式だけ。取れない・読めないときは null（=データ無し）で、代替ソースは使わない。
 //
 // 第一ソース: JR西日本公式 trafficinfo.json
 //   近畿エリア(id=2) > 当日 > 京阪神(id=1) > lineName に「神戸線」
 //   無掲載 = 平常。iconType 0001=見合わせ / 0003=遅延 / 0000・0999=お知らせ
 // フィード形式（status.json）:
-//   { v:1, source:'official'|'yahoo', state, createdAt, fetchedAt, details:[...], text }
+//   { v:1, state, createdAt, fetchedAt, details:[...] }
 var WarpStatus = (function () {
   'use strict';
   var OFFICIAL_URL = 'https://trafficinfo.westjr.co.jp/api/v1/trafficinfo.json';
   var OFFICIAL_PAGE = 'https://trafficinfo.westjr.co.jp/kinki.html';
-  var YAHOO_URL = 'https://transit.yahoo.co.jp/diainfo/273/0';
 
   function todayJST(now) {
     var d = new Date((now || new Date()).getTime() + 9 * 3600 * 1000);
@@ -45,7 +45,7 @@ var WarpStatus = (function () {
       for (var j = 0; j < lines.length; j++) {
         if (lines[j] && String(lines[j].lineName || '').indexOf('神戸線') >= 0) { kobe = lines[j]; break; }
       }
-      var out = { v: 1, source: 'official', state: 'normal', createdAt: data.createdAt || null, details: [], text: '' };
+      var out = { v: 1, state: 'normal', createdAt: data.createdAt || null, details: [] };
       if (!kobe) return out;
       var details = Array.isArray(kobe.conventionalLineTrafficInfoDetails) ? kobe.conventionalLineTrafficInfoDetails : [];
       var conds = details.map(function (x) { return String((x && x.conditionName) || ''); });
@@ -77,26 +77,14 @@ var WarpStatus = (function () {
     }
   }
 
-  // Yahoo!路線情報（公式が取れないときのフォールバック専用）
-  function parseYahoo(html) {
-    var m = /id="mdServiceStatus"([\s\S]*?)<\/dl>/.exec(html || '');
-    if (!m) return null;
-    var text = m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace('運転状況', '').trim().replace(/^>\s*/, '').trim();
-    if (!text) return null;
-    var state = 'normal';
-    if (text.indexOf('見合わせ') >= 0 || text.indexOf('運休') >= 0) state = 'suspended';
-    else if (text.indexOf('遅れ') >= 0) state = 'delay';
-    return { v: 1, source: 'yahoo', state: state, createdAt: null, details: [], text: text };
-  }
-
   var HEADS = {
     normal: '平常運転', delay: '遅延', partial: '一部運休・遅延',
     suspended: '運転見合わせ', notice: 'お知らせ', unknown: '運行情報 未確認'
   };
 
   return {
-    OFFICIAL_URL: OFFICIAL_URL, OFFICIAL_PAGE: OFFICIAL_PAGE, YAHOO_URL: YAHOO_URL,
-    todayJST: todayJST, parseOfficial: parseOfficial, parseYahoo: parseYahoo, HEADS: HEADS
+    OFFICIAL_URL: OFFICIAL_URL, OFFICIAL_PAGE: OFFICIAL_PAGE,
+    todayJST: todayJST, parseOfficial: parseOfficial, HEADS: HEADS
   };
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = WarpStatus;
