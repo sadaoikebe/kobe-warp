@@ -177,7 +177,7 @@ body{overflow-x:hidden;overscroll-behavior-y:contain}
 
 /* ---------- 合言葉ゲート: app.bin (AES-GCM) を復号して起動 ---------- */
 (function () {
-  var SALT = 'c3HG7DMJopalXN3pjB1f+g==', ITER = 250000, BUILD = '476295a310';
+  var SALT = 'c3HG7DMJopalXN3pjB1f+g==', ITER = 250000, BUILD = '8dbb9b60c5';
   var gate = document.getElementById('gate'), form = document.getElementById('gform'), inp = document.getElementById('gpass'), err = document.getElementById('gerr');
   var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del: function (k) { try { localStorage.removeItem(k); } catch (e) {} } };
   function b64d(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
